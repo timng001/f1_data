@@ -1,0 +1,130 @@
+import plotly.figure_factory as ff
+import pandas as pd
+import plotly.express as px
+import dash
+import dash_html_components as html
+import dash_core_components as dcc
+from dash.dependencies import Input, Output
+
+app = dash.Dash(__name__)
+
+#---------------------------------------------------------------------------
+
+
+#---------------------------------------------------------------------------
+app.layout = html.Div([
+    html.Div([
+        html.Label(['Formula One Racing Data']),
+        html.H1(['Choose A Grand Prix:']),
+        dcc.Dropdown(
+            id='my_dropdown',
+            options=[
+                {'label':'70th Anniversary Grand Prix','value':'70th Anniversary Grand Prix'},
+                {'label':'Abu Dhabi Grand Prix','value':'Abu Dhabi Grand Prix'},
+                {'label':'Argentine Grand Prix','value':'Argentine Grand Prix'},
+                {'label':'Australian Grand Prix','value':'Australian Grand Prix'},
+                {'label':'Austrian Grand Prix','value':'Austrian Grand Prix'},
+                {'label':'Azerbaijan Grand Prix','value':'Azerbaijan Grand Prix'},
+                {'label':'Bahrain Grand Prix','value':'Azerbaijan Grand Prix'},
+                {'label':'Belgian Grand Prix','value':'Belgian Grand Prix'},
+                {'label':'Brazilian Grand Prix','value':'Brazilian Grand Prix'},
+                {'label':'British Grand Prix','value':'British Grand Prix'},
+                {'label':'Caesars Palace Grand Prix','value':'Caesars Palace Grand Prix'},
+                {'label':'Canadian Grand Prix','value':'Canadian Grand Prix'},
+                {'label':'Chinese Grand Prix ','value':'Chinese Grand Prix'},
+                {'label':'Dallas Grand Prix','value':'Dallas Grand Prix'},
+                {'label':'Detroit Grand Prix','value':'Detroit Grand Prix'},
+                {'label':'Dutch Grand Prix','value':'Dutch Grand Prix'},
+                {'label':'Eifel Grand Prix','value':'Eifel Grand Prix'},
+                {'label':'Emilia Romagna Grand Prix','value':'Emilia Romagna Grand Prix'},
+                {'label':'European Grand Prix','value':'European Grand Prix'},
+                {'label':'French Grand Prix','value':'French Grand Prix'},
+                {'label':'German Grand Prix','value':'German Grand Prix'},
+                {'label':'Hungarian Grand Prix','value':'Hungarian Grand Prix'},
+                {'label':'Indian Grand Prix','value':'Indian Grand Prix'},
+                {'label':'Indianapolis 500','value':'Indianapolis 500'},
+                {'label':'Italian Grand Prix','value':'Italian Grand Prix'},
+                {'label':'Japanese Grand Prix ','value':'Japanese Grand Prix'},
+                {'label':'Korean Grand Prix','value':'Korean Grand Prix'},
+                {'label':'Luxembourg Grand Prix','value':'Luxembourg Grand Prix'},
+                {'label':'Malaysian Grand Prix','value':'Malaysian Grand Prix'},
+                {'label':'Mexican Grand Prix','value':'Mexican Grand Prix'},
+                {'label':'Monaco Grand Prix','value':'Monaco Grand Prix'},
+                {'label':'Moroccan Grand Prix','value':'Moroccan Grand Prix'},
+                {'label':'Pacific Grand Prix','value':'Pacific Grand Prix'},
+                {'label':'Pescara Grand Prix','value':'Pescara Grand Prix'},
+                {'label':'Portuguese Grand Prix','value':'Portuguese Grand Prix'},
+                {'label':'Russian Grand Prix','value':'Russian Grand Prix'},
+                {'label':'Sakhir Grand Prix','value':'Sakhir Grand Prix'},
+                {'label':'San Marino Grand Prix','value':'San Marino Grand Prix'},
+                {'label':'Singapore Grand Prix','value':'Singapore Grand Prix'},
+                {'label':'South African Grand Prix','value':'South African Grand Prix'},
+                {'label':'Spanish Grand Prix','value':'Spanish Grand Prix'},
+                {'label':'Styrian Grand Prix','value':'Styrian Grand Prix'},
+                {'label':'Swedish Grand Prix','value':'Swedish Grand Prix'},
+                {'label':'Swiss Grand Prix','value':'Swiss Grand Prix'},
+                {'label':'Turkish Grand Prix','value':'Turkish Grand Prix'},
+                {'label':'Tuscan Grand Prix','value':'Tuscan Grand Prix'},
+                {'label':'United States Grand Prix','value':'United States Grand Prix'},
+                {'label':'United States Grand Prix West','value':'United States Grand Prix West'}
+            ],
+            value='Spanish Grand Prix',
+            multi=False,
+            clearable=False,
+            style={"width": "50%"}
+        )
+    ]),
+
+    html.Div([
+        dcc.Graph(id='the_graph')
+    ]),
+])
+# # -------------------------------------------------------------------------------
+@app.callback(
+    Output(component_id='the_graph', component_property='figure'),
+    [Input(component_id='my_dropdown', component_property='value')]
+)
+
+def update_graph(my_dropdown):
+    # Circuits Legend
+    circuits_file = 'C:/Users/Tim\python_projects/f1_data/F1 RaceData/circuits.csv'
+    circuits_data = pd.read_csv(circuits_file)
+
+    # Drop the Url
+    circuits_data = circuits_data.drop(columns=['url'])
+
+    # ---------------------------------------------------------------------------
+    # Constructor Legend
+    constructor_file = 'C:/Users/Tim\python_projects/f1_data/F1 RaceData/constructors.csv'
+    constructor_data = pd.read_csv(constructor_file)
+
+    # Drop the Url
+    constructor_data = constructor_data.drop(columns=['url'])
+
+    # ---------------------------------------------------------------------------
+    # Race Legend
+    race_file = 'C:/Users/Tim\python_projects/f1_data/F1 RaceData/races.csv'
+    race_data = pd.read_csv(race_file)
+
+    # Drop the Url
+    race_data = race_data.drop(columns=['url'])
+    spanish_gp = race_data[race_data['name'] == my_dropdown]
+
+    # Get Data the same raceId's from the constructorID's
+    results_file = 'C:/Users/Tim\python_projects/f1_data/F1 RaceData/results.csv'
+    results_data = pd.read_csv(results_file)
+
+    construct_ = pd.merge(spanish_gp, results_data, on=['raceId'])
+
+    construct_names = pd.merge(construct_, constructor_data, on=['constructorId'])
+    construct_winners = construct_names[construct_names['position'] == '1']
+    bet = construct_winners.groupby(['name_y']).size()
+
+    pieChart = px.pie(construct_names, values=bet.values, names=bet.index,
+                      title='Winners of All the "{}"'.format(my_dropdown),
+                      color_discrete_sequence=px.colors.diverging.Picnic,
+                      template='plotly_dark')
+    return pieChart
+# #------------------------------------------------------------------------------
+if __name__ == '__main__':
+    app.run_server(debug=True)
